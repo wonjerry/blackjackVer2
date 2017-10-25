@@ -14,7 +14,7 @@
     transition:all .5s ease;
     backface-visibility:hidden;
     box-shadow: 5px 5px 5px #888888;
-    top: -310px;
+    top: -320px;
     left: 350px;
 }
 .pokerchip div{
@@ -23,6 +23,12 @@
     font-size: 30px;
     top:25%;
     /*left: 27%;*/
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    user-select: none; /* Standard */
+    cursor: pointer;
+
 }
 .pokerchip.red{
     background:#DD4631;
