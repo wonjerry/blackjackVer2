@@ -72,5 +72,5 @@ module.exports = {
   ],
   messageViewXY : [350,180],
   valueSumViewXY: [-47,-70],
-  valueSumTextXY: [-15,-45],
+  valueSumTextXY: [-15,-45]
 }
