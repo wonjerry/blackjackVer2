@@ -1,12 +1,16 @@
 var dict = []
 
-dict['deal'] =
-  '<button type="button" class="gameButton" >DEAL</button>'
+dict['buttons'] =
+  '<button type="button" class="gameButton" id = "Deal">DEAL</button>'+
+  '<button type="button" class="gameButton" id = "Stand" style="display: inline-block">STAND</button>'+
+  '<button type="button" class="gameButton" id = "Hit" style="display: none">HIT</button>'+
+  '<button type="button" class="gameButton" id = "Split" style="display: none">SPLIT</button>'+
+  '<button type="button" class="gameButton" id = "Double" style="display: none">DOUBLE DOWN</button>'
 dict['play'] =
-  '<button type="button" class="gameButton" >STAND</button>'+
-  '<button type="button" class="gameButton" >HIT</button>'+
-  '<button type="button" class="gameButton" >SPLIT</button>'+
-  '<button type="button" class="gameButton" >DOUBLE DOWN</button>'
+  '<button type="button" class="gameButton" style="display: none">STAND</button>'+
+  '<button type="button" class="gameButton" style="display: none">HIT</button>'+
+  '<button type="button" class="gameButton" style="display: none">SPLIT</button>'+
+  '<button type="button" class="gameButton" style="display: none">DOUBLE DOWN</button>'
 
 dict['chips'] =
   '<div class="pokerchip"> <div>10</div></div>' +

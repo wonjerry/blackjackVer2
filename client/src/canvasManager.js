@@ -10,7 +10,6 @@ function CanvasManager () {
   self.stage = null
   self.buttonContainer = null
   self.chipContainer = null
-  self.messageContainer = null
 
   self.cardTextures = []
   self.myCardContainer = null
@@ -23,6 +22,10 @@ function CanvasManager () {
   self.playerStateText = null
   self.valueSumTexts = []
   self.cardContainers = []
+
+  // 일단 '나'와 '딜러'의 card 데이터들은 따로 관리하는데 나중에 더 나은 방식을 찾아봐야겠다
+  self.myCardContainer = null
+  self.myValueSumText = null
 }
 
 CanvasManager.prototype.init = function () {
@@ -40,6 +43,8 @@ CanvasManager.prototype.init = function () {
   self.initBar()
   // create initial button and chips
   self.initButtonAndChips()
+  // create game state view
+  self.initGamestateView('Betting.....')
 
   // slice card image
   PIXI.loader.add('spritesheet', './../image/cards2.json')
@@ -52,31 +57,7 @@ CanvasManager.prototype.onAssetsLoaded = function () {
   for (var i = 1; i <= 52; i++) {
     self.cardTextures.push(PIXI.Texture.fromFrame('card' + i + '.png'))
   }
-  self.addCardArea('hi')
-  self.addMessageView('WIN')
-}
-/**
- *
- * @param card // suit  0 ~ 3 , value  1 ~ 13
- * @param container // card image container for each player
- */
-CanvasManager.prototype.addCard = function (card, container) {
-  var self = this
-
-  var suit = card.suit
-  var value = card.value
-  var index = suit * 13 + value
-
-  var sprite = PIXI.Sprite.from(self.cardTextures[index])
-  sprite.anchor.set(0.5)
-  sprite.x = 30 * container.children.length
-  sprite.y = 0
-  sprite.scale.set(0.8)
-
-  // 으허 container에 anchor가 안먹어서 내가 직접 밀어줘야하다니....
-  container.x = container.x - 12
-
-  container.addChild(sprite)
+  self.addCardArea(/*player data*/)
 }
 
 CanvasManager.prototype.initButtonAndChips = function () {
@@ -85,17 +66,34 @@ CanvasManager.prototype.initButtonAndChips = function () {
   // 이건 아직 애매하다
   self.buttonContainer = document.createElement('div')
   self.buttonContainer.setAttribute('class', 'buttonContainer')
-  self.buttonContainer.innerHTML = mustache.render(template['deal'], {})
+  self.buttonContainer.innerHTML = mustache.render(template['buttons'], {})
   document.body.appendChild(self.buttonContainer)
+
+  var buttons = document.getElementsByClassName('gameButton')
+  for (var i = 0, len = buttons.length; i < len; i++) {
+    buttons[i].addEventListener('click', function (e) {
+      console.log(e.target.id)
+    })
+  }
 
   self.chipContainer = document.createElement('div')
   self.chipContainer.setAttribute('class', 'chipContainer')
   self.chipContainer.innerHTML = mustache.render(template['chips'], {})
   document.body.appendChild(self.chipContainer)
-  var chips = document.getElementsByClassName('chipContainer')
+
+  var chips = document.getElementsByClassName('pokerchip')
   chips[0].addEventListener('click', function () {
-    console.log('hahahahaha')
+    console.log('10')
   })
+
+  chips[1].addEventListener('click', function () {
+    console.log('25')
+  })
+
+  chips[2].addEventListener('click', function () {
+    console.log('50')
+  })
+  console.log(self.buttonContainer.children)
 }
 
 CanvasManager.prototype.initBar = function () {
@@ -161,24 +159,57 @@ CanvasManager.prototype.initBar = function () {
   self.stage.addChild(barContainer)
 }
 
+CanvasManager.prototype.initGamestateView = function (message) {
+  var self = this
+
+  var messageContainer = new PIXI.Container()
+
+  var graphics = new PIXI.Graphics()
+  graphics.lineStyle(2, 0xb5beb4, 1)
+  graphics.beginFill(0x1C281A, 1)
+  graphics.drawRoundedRect(0, 0, 200, 100, 15)
+  graphics.endFill()
+// create some white text using the Snippet webfont
+  self.gameStateText = new PIXI.Text(message, {
+    font: '30px Snippet',
+    fill: 'white',
+    align: 'center'
+  })
+
+  self.gameStateText.anchor.set(0.5, 0.5)
+  self.gameStateText.position.set(100, 50)
+
+  messageContainer.addChild(graphics)
+  messageContainer.addChild(self.gameStateText)
+  messageContainer.x = 10
+  messageContainer.y = 10
+
+  self.stage.addChild(messageContainer)
+}
+
 // 요건 플레이어 들어올 때 마다 하나씩 만들던가 해야겠다
 // betting state일 때 player 순회하면서 만들면 될듯
+/**
+ *
+ * @param playerData : self or not, value sum, cards
+ */
 CanvasManager.prototype.addCardArea = function (playerData) {
   var self = this
 
-  var cardContainer = new PIXI.Container()
-  cardContainer.x = 500
-  cardContainer.y = 400
-  // 나중에 해당 player가 접속했을 때 추가할 것 이다 첫화면에선 안보여줄꺼
-  self.cardContainers.push(cardContainer)
+  var container = new PIXI.Container()
+  container.x = 480
+  container.y = 200
 
+  self.cardContainers.push(container)
+
+  var valuesumContainer = new PIXI.Container()
   var graphics = new PIXI.Graphics()
   // draw a rounded rectangle
   graphics.beginFill(0x000000, 0.7)
   graphics.drawRoundedRect(-40, -70, 50, 50, 15)
   graphics.endFill()
 
-  var text = new PIXI.Text(' ', {
+  var text = new PIXI.Text('10', {
     font: '30px Snippet',
     fill: 'white',
     align: 'center'
@@ -186,13 +217,52 @@ CanvasManager.prototype.addCardArea = function (playerData) {
 
   text.anchor.set(0.5, 0.5)
   text.position.set(-15, -45)
-  cardContainer.addChild(graphics)
-  cardContainer.addChild(text)
+  valuesumContainer.addChild(graphics)
+  valuesumContainer.addChild(text)
+  container.addChild(valuesumContainer)
+
+  var cardContainer = new PIXI.Container()
+  cardContainer.x = -12
+  cardContainer.y = 0
+
+  container.addChild(cardContainer)
+
+  //cardContainer.addChild(graphics)
+  //cardContainer.addChild(text)
   // 나중에 player id를 key 값으로 넣어서 배열로 관리할 것 이다
   self.valueSumTexts.push(text)
+  self.stage.addChild(container)
 
-  self.stage.addChild(cardContainer)
+  self.addCard({suit: 0, value: 1}, cardContainer)
+  self.addCard({suit: 0, value: 1}, cardContainer)
+  self.addCard({suit: 0, value: 1}, cardContainer)
+  self.addCard({suit: 0, value: 1}, cardContainer)
 }
+
+/**
+ *
+ * @param card // suit  0 ~ 3 , value  1 ~ 13
+ * @param container // card image container for each player
+ */
+CanvasManager.prototype.addCard = function (card, container) {
+  var self = this
+
+  var suit = card.suit
+  var value = card.value
+  var index = suit * 13 + value
+
+  var sprite = PIXI.Sprite.from(self.cardTextures[index])
+  sprite.anchor.set(0.5)
+  sprite.x = 30 * (container.children.length + 1)
+  sprite.y = 0
+  sprite.scale.set(0.8)
+
+  // 으허 container에 anchor가 안먹어서 내가 직접 밀어줘야하다니....
+  container.parent.x -= 12
+
+  container.addChild(sprite)
+}
+
 /**
  *
  * @param money : int value from server
@@ -217,86 +287,9 @@ CanvasManager.prototype.updateGamestate = function (state) {
   self.gameStateText.text = state
 }
 
-CanvasManager.prototype.updateValueSum = function (id,sum) {
+CanvasManager.prototype.updateValueSum = function (id, sum) {
   var self = this
   self.valueSumTexts[id].text = sum
-}
-
-CanvasManager.prototype.drawBalMoney = function (money) {
-  var self = this
-
-  var graphics = new PIXI.Graphics()
-  // draw a rounded rectangle
-  graphics.lineStyle(2, 0xb5beb4, 1)
-  graphics.beginFill(0x1C281A, 1)
-  graphics.drawRoundedRect(790, 10, 200, 80, 15)
-  graphics.endFill()
-
-  var text = new PIXI.Text('BAL : $' + money, {
-    font: '30px Snippet',
-    fill: 'white',
-    align: 'center'
-  })
-
-  text.anchor.set(0.5, 0.5)
-  text.position.set(890, 50)
-  self.barContainer.addChild(graphics)
-  self.barContainer.addChild(text)
-}
-
-CanvasManager.prototype.addMessageView = function (message) {
-  var self = this
-
-  self.messageContainer = new PIXI.Container()
-
-  var graphics = new PIXI.Graphics()
-  graphics.lineStyle(2, 0xb5beb4, 1)
-  graphics.beginFill(0x1C281A, 1)
-  graphics.drawRoundedRect(0, 0, 300, 100, 15)
-  graphics.endFill()
-// create some white text using the Snippet webfont
-  var text = new PIXI.Text(message, {
-    font: '30px Snippet',
-    fill: 'white',
-    align: 'center'
-  })
-
-  text.anchor.set(0.5, 0.5)
-  text.position.set(150, 50)
-
-  self.messageContainer.addChild(graphics)
-  self.messageContainer.addChild(text)
-  self.messageContainer.x = 350
-  self.messageContainer.y = 180
-
-  self.stage.addChild(self.messageContainer)
-  /*
-  setTimeout(function () {
-    messageContainer.destroy(true)
-    self.renderer.render(self.stage)
-  },2000)
-  */
-}
-
-CanvasManager.prototype.addValueSumView = function (sum, container) {
-  var self = this
-
-  var graphics = new PIXI.Graphics()
-  // draw a rounded rectangle
-  graphics.beginFill(0x000000, 0.7)
-  graphics.drawRoundedRect(-40, -70, 50, 50, 15)
-  graphics.endFill()
-
-  var text = new PIXI.Text(sum, {
-    font: '30px Snippet',
-    fill: 'white',
-    align: 'center'
-  })
-
-  text.anchor.set(0.5, 0.5)
-  text.position.set(-15, -45)
-  container.addChild(graphics)
-  container.addChild(text)
 }
 
 CanvasManager.prototype.renderLoop = function () {
